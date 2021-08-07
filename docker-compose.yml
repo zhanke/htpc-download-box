@@ -5,7 +5,7 @@ services:
     image: dperson/openvpn-client:latest
     cap_add:
       - net_admin # required to modify network interfaces
-    restart: unless-stopped
+    restart: always
     volumes:
       - /dev/net:/dev/net:z # tun device
       - ${ROOT}/config/vpn:/vpn # OpenVPN configuration
@@ -19,7 +19,7 @@ services:
   deluge:
     container_name: deluge
     image: linuxserver/deluge:latest
-    restart: unless-stopped
+    restart: always
     network_mode: service:vpn # run on the vpn network
     environment:
       - PUID=${PUID} # default user id, defined in .env
@@ -28,11 +28,17 @@ services:
     volumes:
       - ${ROOT}/downloads:/downloads # downloads folder
       - ${ROOT}/config/deluge:/config # config files
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8112"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
 
   jackett:
     container_name: jackett
     image: linuxserver/jackett:latest
-    restart: unless-stopped
+    restart: always
     network_mode: service:vpn
     environment:
       - PUID=${PUID} # default user id, defined in .env
@@ -42,11 +48,17 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/downloads/torrent-blackhole:/downloads # place where to put .torrent files for manual download
       - ${ROOT}/config/jackett:/config # config files
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9117/UI/Dashboard"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
 
   # nzbget:
   #   container_name: nzbget
   #   image: linuxserver/nzbget:latest
-  #   restart: unless-stopped
+  #   restart: always
   #   network_mode: host
   #   environment:
   #     - PUID=${PUID} # default user id, defined in .env
@@ -59,7 +71,7 @@ services:
   sonarr:
     container_name: sonarr
     image: linuxserver/sonarr:latest
-    restart: unless-stopped
+    restart: always
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -71,11 +83,18 @@ services:
       - ${ROOT}/downloads:/downloads # download folder
     ports:
       - 8989:8989
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+
 
   radarr:
     container_name: radarr
     image: linuxserver/radarr:latest
-    restart: unless-stopped
+    restart: always
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -87,11 +106,17 @@ services:
       - ${ROOT}/downloads:/downloads # download folder
     ports:
       - 7878:7878
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
 
   plex-server:
     container_name: plex-server
     image: plexinc/pms-docker:latest
-    restart: unless-stopped
+    restart: always
     environment:
       - TZ=${TZ} # timezone, defined in .env
     volumes:
@@ -101,10 +126,18 @@ services:
     ports:
       - 32400:32400
 
+  autoheal:
+      restart: always
+      image: willfarrell/autoheal
+      environment:
+        - AUTOHEAL_CONTAINER_LABEL=all
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+
   # bazarr:
   #   container_name: bazarr
   #   image: linuxserver/bazarr
-  #   restart: unless-stopped
+  #   restart: always
   #   network_mode: host
   #   environment:
   #     - PUID=${PUID} # default user id, defined in .env
