@@ -83,6 +83,8 @@ services:
     restart: always
     environment:
       - TZ=${TZ} # timezone, defined in .env
+      - PUID=${PUID} # default user id, defined in .env
+      - PGID=${PGID} # default group id, defined in .env
     volumes:
       - plexconfig:/config # plex database
       - plextranscode:/transcode # temp transcoded files
