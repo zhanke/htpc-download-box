@@ -1,3 +1,10 @@
+# Windows 10 Pro, WSL2 on Ubuntu, Docker Desktop
+1. Have to use volume, can't use host path mount
+1. Can't use host network, have to do port mapping. Note, changed default port number for all.
+1. Jackett is also through VPN
+
+
+
 # HTPC Download Box
 
 Sonarr / Radarr / Jackett / NZBGet / Deluge / OpenVPN / Plex

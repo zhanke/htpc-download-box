@@ -1,4 +1,3 @@
-version: "3.4"
 services:
   vpn:
     container_name: vpn
@@ -6,15 +5,18 @@ services:
     cap_add:
       - net_admin # required to modify network interfaces
     restart: always
+    dns: # fix connection issues, jackett could not connect, deluge cant get ip
+      - 8.8.8.8
+      - 8.8.4.4
     volumes:
       - /dev/net:/dev/net:z # tun device
-      - ${ROOT}/config/vpn:/vpn # OpenVPN configuration
+      - vpnconfig:/vpn # OpenVPN configuration
     security_opt:
       - label:disable
     ports:
       - 8112:8112 # port for deluge web UI to be reachable from local network
-      - 9117:9117
-    command: '-f "" -r 192.168.1.0/24 -d' # enable firewall and route local network traffic
+      - 9118:9117 # Port for jackett
+    command: '-f "" -r 192.168.1.0/24' # enable firewall and route local network traffic
 
   deluge:
     container_name: deluge
@@ -26,14 +28,8 @@ services:
       - PGID=${PGID} # default group id, defined in .env
       - TZ=${TZ} # timezone, defined in .env
     volumes:
-      - ${ROOT}/downloads:/downloads # downloads folder
-      - ${ROOT}/config/deluge:/config # config files
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8112"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 1m
+      - downloads:/downloads # downloads folder
+      - delugeconfig:/config # config files
 
   jackett:
     container_name: jackett
@@ -47,26 +43,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/downloads/torrent-blackhole:/downloads # place where to put .torrent files for manual download
-      - ${ROOT}/config/jackett:/config # config files
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9117/UI/Dashboard"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 1m
-
-  # nzbget:
-  #   container_name: nzbget
-  #   image: linuxserver/nzbget:latest
-  #   restart: always
-  #   network_mode: host
-  #   environment:
-  #     - PUID=${PUID} # default user id, defined in .env
-  #     - PGID=${PGID} # default group id, defined in .env
-  #     - TZ=${TZ} # timezone, defined in .env
-  #   volumes:
-  #     - ${ROOT}/downloads:/downloads # download folder
-  #     - ${ROOT}/config/nzbget:/config # config files
+      - jackettconfig:/config # config files
 
   sonarr:
     container_name: sonarr
@@ -78,18 +55,11 @@ services:
       - TZ=${TZ} # timezone, defined in .env
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/config/sonarr:/config # config files
-      - ${ROOT}/complete/tv:/tv # tv shows folder
-      - ${ROOT}/downloads:/downloads # download folder
+      - sonarrconfig:/config # config files
+      - tvs:/tv # tv shows folder
+      - downloads:/downloads # download folder
     ports:
-      - 8989:8989
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8989"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 1m
-
+      - 8988:8989
 
   radarr:
     container_name: radarr
@@ -101,17 +71,11 @@ services:
       - TZ=${TZ} # timezone, defined in .env
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/config/radarr:/config # config files
-      - ${ROOT}/complete/movies:/movies # movies folder
-      - ${ROOT}/downloads:/downloads # download folder
+      - radarrconfig:/config # config files
+      - movies:/movies # movies folder
+      - downloads:/downloads # download folder
     ports:
-      - 7878:7878
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7878"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 1m
+      - 7879:7878
 
   plex-server:
     container_name: plex-server
@@ -120,33 +84,21 @@ services:
     environment:
       - TZ=${TZ} # timezone, defined in .env
     volumes:
-      - ${ROOT}/config/plex/db:/config # plex database
-      - ${ROOT}/config/plex/transcode:/transcode # temp transcoded files
-      - ${ROOT}/complete:/data # media library
+      - plexconfig:/config # plex database
+      - plextranscode:/transcode # temp transcoded files
+      - tvs:/data/tvs # media library
+      - movies:/data/movies # media library
     ports:
-      - 32400:32400
+      - 32401:32400
 
-  autoheal:
-      restart: always
-      image: willfarrell/autoheal
-      environment:
-        - AUTOHEAL_CONTAINER_LABEL=all
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-
-  # bazarr:
-  #   container_name: bazarr
-  #   image: linuxserver/bazarr
-  #   restart: always
-  #   network_mode: host
-  #   environment:
-  #     - PUID=${PUID} # default user id, defined in .env
-  #     - PGID=${PGID} # default group id, defined in .env
-  #     - TZ=${TZ} # timezone, defined in .env
-  #     - UMASK_SET=022 #optional
-  #   volumes:
-  #     - ${ROOT}/config/bazarr:/config # config files
-  #     - ${ROOT}/complete/movies:/movies # movies folder
-  #     - ${ROOT}/complete/tv:/tv # tv shows folder
-  #   ports:
-  #     - 6767:6767
+volumes:
+  vpnconfig:
+  sonarrconfig:
+  radarrconfig:
+  jackettconfig:
+  plexconfig:
+  plextranscode:
+  delugeconfig:
+  downloads:
+  tvs:
+  movies:
