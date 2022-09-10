@@ -77,29 +77,30 @@ services:
     ports:
       - 7879:7878
 
-  plex-server:
-    container_name: plex-server
-    image: plexinc/pms-docker:latest
-    restart: always
-    environment:
-      - TZ=${TZ} # timezone, defined in .env
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-    volumes:
-      - plexconfig:/config # plex database
-      - plextranscode:/transcode # temp transcoded files
-      - tvs:/data/tvs # media library
-      - movies:/data/movies # media library
-    ports:
-      - 32401:32400
+  # Remove plex, host it in windows directly
+  # plex-server:
+  #   container_name: plex-server
+  #   image: plexinc/pms-docker:latest
+  #   restart: always
+  #   environment:
+  #     - TZ=${TZ} # timezone, defined in .env
+  #     - PUID=${PUID} # default user id, defined in .env
+  #     - PGID=${PGID} # default group id, defined in .env
+  #   volumes:
+  #     - plexconfig:/config # plex database
+  #     - plextranscode:/transcode # temp transcoded files
+  #     - tvs:/data/tvs # media library
+  #     - movies:/data/movies # media library
+  #   ports:
+  #     - 32401:32400
 
 volumes:
   vpnconfig:
   sonarrconfig:
   radarrconfig:
   jackettconfig:
-  plexconfig:
-  plextranscode:
+  #plexconfig:
+  #plextranscode:
   delugeconfig:
   downloads:
   tvs:
