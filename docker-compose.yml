@@ -23,6 +23,9 @@ services:
     image: linuxserver/deluge:latest
     restart: always
     network_mode: service:vpn # run on the vpn network
+    depends_on:
+      vpn:
+        condition: service_healthy
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -30,12 +33,21 @@ services:
     volumes:
       - downloads:/downloads # downloads folder
       - delugeconfig:/config # config files
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8112"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   jackett:
     container_name: jackett
     image: linuxserver/jackett:latest
     restart: always
     network_mode: service:vpn
+    depends_on:
+      vpn:
+        condition: service_healthy
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -49,6 +61,11 @@ services:
     container_name: sonarr
     image: linuxserver/sonarr:latest
     restart: always
+    depends_on:
+      jackett:
+        condition: service_healthy
+      deluge:
+        condition: service_healthy
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -65,6 +82,11 @@ services:
     container_name: radarr
     image: linuxserver/radarr:latest
     restart: always
+    depends_on:
+      jackett:
+        condition: service_healthy
+      deluge:
+        condition: service_healthy
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
